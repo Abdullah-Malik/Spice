@@ -25,8 +25,8 @@ export default tseslint.config(
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_'
-        }
+          caughtErrorsIgnorePattern: '^_',
+        },
       ],
     },
   },
@@ -34,7 +34,7 @@ export default tseslint.config(
   // Configuration to disable rules that conflict with Prettier
   // This should always be the LAST item in the array.
   eslintConfigPrettier,
-  
+
   // You can add ignores here
   {
     ignores: ['dist/', 'node_modules/', '.env', 'eslint.config.mjs'],
