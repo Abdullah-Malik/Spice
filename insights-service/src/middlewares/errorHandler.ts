@@ -23,6 +23,26 @@ export const errorHandler = (error: Error, req: Request, res: Response, _next: N
     'Error occurred'
   );
 
+  if (error.name === 'MongoServerError' && error.message.includes('E11000 duplicate key error')) {
+    const duplicateField = extractDuplicateField(error.message);
+
+    logger.warn(
+      {
+        duplicateField,
+        action: 'duplicate_key_attempt',
+      },
+      'Duplicate key error occurred'
+    );
+
+    res.status(409).json({
+      error: {
+        message: `${duplicateField} already exists`,
+        code: 'DUPLICATE_KEY_ERROR',
+      },
+    });
+    return;
+  }
+
   switch (error.name) {
     case ErrorNames.AUTHENTICATION_ERROR:
     case ErrorNames.INVALID_TOKEN_ERROR:
@@ -90,3 +110,8 @@ export const errorHandler = (error: Error, req: Request, res: Response, _next: N
   });
   return;
 };
+
+function extractDuplicateField(errorMessage: string): string {
+  const match = errorMessage.match(/dup key: \{ (\w+):/);
+  return match ? match[1] : 'field';
+}

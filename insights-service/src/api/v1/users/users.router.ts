@@ -7,4 +7,4 @@ const userRouter = Router();
 userRouter.get('/:id', getUserById);
 userRouter.get('/', authenticate, getUserByEmail);
 
-export { userRouter };
+export default userRouter;
