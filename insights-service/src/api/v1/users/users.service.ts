@@ -25,5 +25,13 @@ export const getUserById = async (id: string) => {
 };
 
 export const getUserByEmail = async (email: string) => {
-  return await userRepository.findOneUser({ email });
+  const user = await userRepository.findOneUser({ email });
+
+  if (!user) {
+    throw new UserNotFoundError(email);
+  }
+
+  const { password: _, ...userData } = user.toObject();
+
+  return userData;
 };
