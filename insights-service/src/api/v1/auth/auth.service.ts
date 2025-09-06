@@ -13,7 +13,7 @@ export const registerUser = async (userData: CreateUserData) => {
     password: hashedPassword,
   });
 
-  const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET || '', { expiresIn: '24h' });
+  const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET || '', { expiresIn: '24h' });
 
   const { password: _, ...userResponse } = user.toObject();
 
@@ -34,7 +34,7 @@ export const loginUser = async (email: string, password: string) => {
     throw new InvalidCredentialsError();
   }
 
-  const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET || '', { expiresIn: '24h' });
+  const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET || '', { expiresIn: '24h' });
 
   const { password: _, ...userResponse } = user.toObject();
 

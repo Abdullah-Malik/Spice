@@ -3,8 +3,7 @@ import { Schema, model, Document } from 'mongoose';
 export interface ISearchResult {
   title: string;
   url: string;
-  snippet: string;
-  relevanceScore?: number;
+  summary: string;
 }
 
 export interface IContentResult {
@@ -41,8 +40,7 @@ const searchResultSchema = new Schema(
   {
     title: { type: String, required: true },
     url: { type: String, required: true },
-    snippet: { type: String, required: true },
-    relevanceScore: { type: Number },
+    summary: { type: String, required: true },
   },
   { _id: false }
 );

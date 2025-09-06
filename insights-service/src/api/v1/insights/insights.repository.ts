@@ -1,9 +1,17 @@
-import { Insight } from './insights.model';
-import { FilterQuery } from 'mongoose';
+import { Insight, IInsightResult } from './insights.model';
+import { FilterQuery, UpdateQuery } from 'mongoose';
 
 export interface CreateInsightData {
   userId: string;
   prompts: string[];
+}
+
+export interface UpdateInsightData {
+  results?: IInsightResult[];
+  completedAt?: Date;
+  status?: string;
+  success?: boolean;
+  error?: string;
 }
 
 export const createInsight = async (insightData: CreateInsightData) => {
@@ -24,6 +32,10 @@ export const findManyInsights = async (filter: FilterQuery<CreateInsightData> = 
 
 export const findInsightsByUserId = async (userId: string) => {
   return await Insight.find({ userId }).sort({ createdAt: -1 });
+};
+
+export const updateInsightById = async (id: string, update: UpdateQuery<UpdateInsightData>) => {
+  return await Insight.findByIdAndUpdate(id, update, { new: true });
 };
 
 export const deleteInsightById = async (id: string) => {

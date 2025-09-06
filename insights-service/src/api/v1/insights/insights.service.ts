@@ -1,15 +1,33 @@
 import * as insightsRepository from './insights.repository';
+import * as webSearchService from '../web-search/web-search.service';
 
 export const createInsight = async (userId: string, prompts: string[]) => {
   try {
-    // Create initial insight record
+    // Search for pages using the provided prompts
+    const searchResults = await webSearchService.getSearchEngineResults(prompts);
+
+    // Create insight record with search results
     const insight = await insightsRepository.createInsight({
       userId,
       prompts,
     });
 
-    return insight;
+    // Update the insight with search results using updateInsightById
+    const updatedInsight = await insightsRepository.updateInsightById(insight.id, {
+      results: [
+        {
+          prompts: prompts,
+          searchResults: searchResults,
+          content: [],
+          insights: '',
+          success: true,
+        },
+      ],
+    });
+
+    return updatedInsight || insight;
   } catch (error) {
+    console.error('Create insight error:', error);
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to create insight: ${message}`);
   }
