@@ -15,11 +15,7 @@ export const createInsight = async (req: Request, res: Response, next: NextFunct
 
     const insight = await insightsService.createInsight(userId!, prompts);
 
-    res.status(201).json({
-      success: true,
-      data: insight,
-      message: 'Insight creation started',
-    });
+    res.status(201).json(insight);
   } catch (error: unknown) {
     next(error);
   }

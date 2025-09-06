@@ -5,9 +5,3 @@ export interface SearchOptions {
 }
 
 export type SearchResult = ExaSearchResult<{ summary: true }>;
-
-export interface SearchResponse {
-  results: SearchResult[];
-  query: string;
-  totalResults: number;
-}

@@ -3,7 +3,6 @@ import { Schema, model, Document } from 'mongoose';
 export interface ISearchResult {
   title: string;
   url: string;
-  summary: string;
 }
 
 export interface IContentResult {

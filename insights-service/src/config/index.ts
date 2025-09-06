@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import { logger } from './logger';
+import { connectDB } from './database';
 
 /**
  * Initializes the application's configuration by loading environment variables.
@@ -13,4 +14,5 @@ export async function initializeConfig() {
     logger.info('Running in development mode. Loading variables from .env file...');
     dotenv.config();
   }
+  await connectDB();
 }

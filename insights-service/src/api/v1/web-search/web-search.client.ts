@@ -19,11 +19,9 @@ export const search = async (query: string, options: SearchOptions = {}): Promis
 
     const response = await client.search(query, searchOptions);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return response.results.map((result: any) => ({
-      title: result.title,
+    return response.results.map((result) => ({
+      title: result.title || '',
       url: result.url,
-      summary: result.summary,
     }));
   } catch (error) {
     console.error('Web search error:', error);
