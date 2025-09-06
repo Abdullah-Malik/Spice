@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import { createUser, getUserById } from '../users/users.controller';
+import { getUserById, getUserByEmail } from '../users/users.controller';
+import { authenticate } from '../../../middlewares/auth';
 
-const router = Router();
+const userRouter = Router();
 
-router.post('/users', createUser);
-router.get('/users/:id', getUserById);
+userRouter.get('/:id', getUserById);
+userRouter.get('/', authenticate, getUserByEmail);
 
-export { router as userRouter };
+export { userRouter };

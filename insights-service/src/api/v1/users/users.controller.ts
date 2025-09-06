@@ -18,3 +18,13 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
     next(error);
   }
 };
+
+export const getUserByEmail = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = await userService.getUserByEmail(req.user!.email);
+
+    res.json(user);
+  } catch (error: unknown) {
+    next(error);
+  }
+};

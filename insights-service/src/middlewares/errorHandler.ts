@@ -67,6 +67,13 @@ export const errorHandler = (error: Error, req: Request, res: Response, _next: N
       return;
 
     case ErrorNames.USER_NOT_FOUND_ERROR:
+      res.status(401).json({
+        error: {
+          message: 'User not found',
+        },
+      });
+      return;
+
     case ErrorNames.INVALID_CREDENTIALS_ERROR:
       res.status(401).json({
         error: {

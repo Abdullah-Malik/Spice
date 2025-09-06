@@ -37,6 +37,6 @@ export default tseslint.config(
   
   // You can add ignores here
   {
-    ignores: ['dist/', 'node_modules/', '.env'],
+    ignores: ['dist/', 'node_modules/', '.env', 'eslint.config.mjs'],
   }
 );

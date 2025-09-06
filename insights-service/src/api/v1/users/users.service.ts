@@ -1,3 +1,4 @@
+import { UserAlreadyExistsError, UserNotFoundError } from '../../../types/error.types';
 import * as userRepository from '../users/users.repository';
 
 export const createUser = async (userData: {
@@ -9,7 +10,7 @@ export const createUser = async (userData: {
 }) => {
   const existingUser = await userRepository.findOneUser({ email: userData.email });
   if (existingUser) {
-    throw new Error('User already exists');
+    throw new UserAlreadyExistsError(userData.email);
   }
 
   return await userRepository.createUser(userData);
@@ -18,7 +19,11 @@ export const createUser = async (userData: {
 export const getUserById = async (id: string) => {
   const user = await userRepository.findUserById(id);
   if (!user) {
-    throw new Error('User not found');
+    throw new UserNotFoundError(id);
   }
   return user;
+};
+
+export const getUserByEmail = async (email: string) => {
+  return await userRepository.findOneUser({ email });
 };
