@@ -28,7 +28,7 @@ export interface IInsight extends Document {
   userId: string;
   prompts: string[];
   status: 'pending' | 'processing' | 'completed' | 'failed';
-  results?: IInsightResult[];
+  results?: IInsightResult;
   createdAt: Date;
   updatedAt: Date;
   completedAt?: Date;
@@ -79,7 +79,7 @@ const insightSchema = new Schema<IInsight>({
     default: 'pending',
     index: true,
   },
-  results: [insightResultSchema],
+  results: insightResultSchema,
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
   completedAt: { type: Date },

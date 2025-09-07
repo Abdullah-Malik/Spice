@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import MarkdownRenderer from '@/components/markdown-renderer';
 
 export default function DashboardPage() {
   const [currentPrompt, setCurrentPrompt] = useState('');
   const [prompts, setPrompts] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<Array<{id: number, text: string, isUser: boolean}>>([]);
+  const [messages, setMessages] = useState<Array<{id: number, content: string, isUser: boolean, prompts?: string[]}>>([]);
+  const [error, setError] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -36,31 +38,74 @@ export default function DashboardPage() {
     if (prompts.length === 0) return;
 
     setIsLoading(true);
+    setError('');
+    
+    // Store prompts before clearing them
+    const currentPrompts = [...prompts];
     
     try {
-      // Add user message showing all prompts
+      // Get JWT token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      // Add user message with individual prompts
       const userMessage = { 
         id: Date.now(), 
-        text: `Generate insights for: ${prompts.join(', ')}`, 
-        isUser: true 
+        content: '', 
+        isUser: true,
+        prompts: currentPrompts
       };
       setMessages(prev => [...prev, userMessage]);
       
-      // Clear prompts after submission
+      // Clear prompts after adding to messages
       setPrompts([]);
       
-      // Simulate AI response
-      setTimeout(() => {
-        const aiMessage = { 
-          id: Date.now() + 1, 
-          text: `Here are insights for your ${prompts.length} prompts: ${prompts.join(', ')}. This is a placeholder response.`, 
-          isUser: false 
-        };
-        setMessages(prev => [...prev, aiMessage]);
-        setIsLoading(false);
-      }, 2000);
+      // Make API call to backend
+      const response = await fetch('http://localhost:3000/v1/insights/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          prompts: currentPrompts
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem('token');
+          router.push('/login');
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Parse the JSON response
+      const data = await response.json();
+      
+      // Extract the insights from the response structure
+      const insights = data.results?.insights || 'No insights generated';
+      
+      // Add AI response message
+      const aiMessage = { 
+        id: Date.now() + 1, 
+        content: insights, 
+        isUser: false 
+      };
+      setMessages(prev => [...prev, aiMessage]);
+      
     } catch (error) {
       console.error('Error generating insights:', error);
+      setError(error instanceof Error ? error.message : 'Failed to generate insights');
+      
+      // Re-add the prompts back if there was an error
+      setPrompts(currentPrompts);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -100,7 +145,7 @@ export default function DashboardPage() {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-medium mb-2">Generate Business Insights</h2>
+                  <h2 className="text-2xl font-medium mb-2">Generate Insights</h2>
                   <p className="text-white/60 text-sm">
                     Add multiple prompts below and generate comprehensive insights
                   </p>
@@ -121,19 +166,27 @@ export default function DashboardPage() {
                       'AI'
                     )}
                   </div>
-                  <div className={`max-w-2xl ${msg.isUser ? 'text-right' : ''}`}>
-                    <div className={`inline-block p-3 rounded-2xl ${
-                      msg.isUser 
-                        ? 'bg-gray-300 text-black' 
-                        : 'bg-white/10 '
-                    }`}>
-                      {msg.text}
-                    </div>
+                  <div className={`${msg.isUser ? 'max-w-2xl text-right' : 'max-w-full'}`}>
+                    {msg.isUser ? (
+                      // User message with individual prompts
+                      <div className="space-y-2">
+                        {msg.prompts?.map((prompt, index) => (
+                          <div key={index} className="inline-block bg-[#006CFF] text-white px-4 py-2 rounded-2xl mr-2 mb-2">
+                            {prompt}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      // AI message with markdown
+                      <div className="inline-block p-4 rounded-2xl">
+                        <MarkdownRenderer content={msg.content} />
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
               {isLoading && (
-                <div className="flex gap-4">
+                <div className="flex gap-4 min-h-[60vh]">
                   <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center flex-shrink-0">
                     AI
                   </div>
@@ -153,9 +206,18 @@ export default function DashboardPage() {
         </div>
       </main>
 
+      {/* Error Display */}
+      {error && (
+        <div className="mx-auto max-w-4xl px-4 py-2">
+          <div className="bg-red-600/20 border border-red-500/30 rounded-lg px-4 py-2 text-red-200 text-sm">
+            {error}
+          </div>
+        </div>
+      )}
+
       {/* Bottom Input */}
-      <div className="flex flex-col items-center justify-center mx-auto border border-white/10 bg-zinc-950 backdrop-blur-sm p-1 rounded-xl -translate-y-3">
-        <div className="w-full min-w-3xl space-y-3 border-white/10  backdrop-blur-sm p-4">
+      <div className="flex flex-col items-center justify-center mx-auto border border-white/10 bg-zinc-950 backdrop-blur-sm p-1 rounded-xl -translate-y-3 translate-x-4">
+        <div className="w-full min-w-3xl space-y-3 border-white/10 backdrop-blur-sm p-4">
           {/* Display Added Prompts */}
           {prompts.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3">

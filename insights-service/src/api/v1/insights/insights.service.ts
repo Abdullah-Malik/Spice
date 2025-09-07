@@ -25,16 +25,14 @@ export const createInsight = async (userId: string, prompts: string[]) => {
 
     // Update the insight with search results using updateInsightById
     const updatedInsight = await insightsRepository.updateInsightById(insight.id, {
-      results: [
-        {
-          prompts: prompts,
-          searchResults: searchResults,
-          content: contentResults.results,
-          context: contentResults.context,
-          insights: insights,
-          success: true,
-        },
-      ],
+      results: {
+        prompts: prompts,
+        searchResults: searchResults,
+        content: contentResults.results,
+        context: contentResults.context,
+        insights: insights,
+        success: true,
+      },
     });
 
     return updatedInsight || insight;
