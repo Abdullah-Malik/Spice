@@ -30,8 +30,9 @@ export const findManyInsights = async (filter: FilterQuery<CreateInsightData> = 
   return await Insight.find(filter).sort({ createdAt: -1 });
 };
 
-export const findInsightsByUserId = async (userId: string) => {
-  return await Insight.find({ userId }).sort({ createdAt: -1 });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const findInsightsByUserId = async (userId: string, projection?: any) => {
+  return await Insight.find({ userId }, projection).sort({ createdAt: -1 });
 };
 
 export const updateInsightById = async (id: string, update: UpdateQuery<UpdateInsightData>) => {

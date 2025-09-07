@@ -51,8 +51,12 @@ export const getInsightById = async (id: string) => {
   return insight;
 };
 
-export const getInsightsByUserId = async (userId: string) => {
-  return await insightsRepository.findInsightsByUserId(userId);
+export const getInsightsIDsByUserId = async (userId: string) => {
+  return await insightsRepository.findInsightsByUserId(userId, {
+    'results.content': 0,
+    'results.context': 0,
+    'results.insights': 0,
+  });
 };
 
 export const getAllInsights = async () => {

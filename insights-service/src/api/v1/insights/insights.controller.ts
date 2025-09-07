@@ -32,11 +32,11 @@ export const getInsight = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-export const getUserInsights = async (req: Request, res: Response, next: NextFunction) => {
+export const getUserInsightsIDs = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?._id;
 
-    const insights = await insightsService.getInsightsByUserId(userId!);
+    const insights = await insightsService.getInsightsIDsByUserId(userId!);
 
     res.status(200).json(insights);
   } catch (error: unknown) {

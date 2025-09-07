@@ -10,7 +10,7 @@ insightsRouter.post('/', authenticate, insightsController.createInsight);
 // Get specific insight by ID
 insightsRouter.get('/:id', authenticate, insightsController.getInsight);
 
-// Get all insights for authenticated user
-insightsRouter.get('/user/me', authenticate, insightsController.getUserInsights);
+// Get all insights IDs for authenticated user
+insightsRouter.get('/user/me', authenticate, insightsController.getUserInsightsIDs);
 
 export default insightsRouter;
