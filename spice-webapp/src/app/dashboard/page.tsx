@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
-  const [message, setMessage] = useState('');
+  const [currentPrompt, setCurrentPrompt] = useState('');
+  const [prompts, setPrompts] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Array<{id: number, text: string, isUser: boolean}>>([]);
   const router = useRouter();
@@ -17,25 +18,49 @@ export default function DashboardPage() {
     }
   }, [router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim()) return;
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (currentPrompt.trim()) {
+        setPrompts(prev => [...prev, currentPrompt.trim()]);
+        setCurrentPrompt('');
+      }
+    }
+  };
 
-    const userMessage = { id: Date.now(), text: message, isUser: true };
-    setMessages(prev => [...prev, userMessage]);
-    
+  const removePrompt = (index: number) => {
+    setPrompts(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleGenerateInsights = async () => {
+    if (prompts.length === 0) return;
+
     setIsLoading(true);
-    setMessage('');
     
     try {
+      // Add user message showing all prompts
+      const userMessage = { 
+        id: Date.now(), 
+        text: `Generate insights for: ${prompts.join(', ')}`, 
+        isUser: true 
+      };
+      setMessages(prev => [...prev, userMessage]);
+      
+      // Clear prompts after submission
+      setPrompts([]);
+      
       // Simulate AI response
       setTimeout(() => {
-        const aiMessage = { id: Date.now() + 1, text: "I'm a placeholder response. Your message has been received!", isUser: false };
+        const aiMessage = { 
+          id: Date.now() + 1, 
+          text: `Here are insights for your ${prompts.length} prompts: ${prompts.join(', ')}. This is a placeholder response.`, 
+          isUser: false 
+        };
         setMessages(prev => [...prev, aiMessage]);
         setIsLoading(false);
-      }, 1000);
+      }, 2000);
     } catch (error) {
-      console.error('Error submitting message:', error);
+      console.error('Error generating insights:', error);
       setIsLoading(false);
     }
   };
@@ -46,12 +71,12 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white">
+    <div className="flex flex-col h-screen bg-zinc-950 text-white">
       {/* Header */}
-      <header className="border-b border-white/20 bg-black/50 backdrop-blur-sm px-4 py-3">
+      <header className="border-b border-white/10 bg-zinc-950 backdrop-blur-sm px-4 py-3">
         <div className="flex justify-between items-center max-w-6xl mx-auto">
           <h1 className="text-lg font-medium">
-            Spice AI
+            Spice
           </h1>
           <button
             onClick={handleLogout}
@@ -75,9 +100,9 @@ export default function DashboardPage() {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-medium mb-2">How can I help you today?</h2>
+                  <h2 className="text-2xl font-medium mb-2">Generate Business Insights</h2>
                   <p className="text-white/60 text-sm">
-                    Start a conversation by typing your message below
+                    Add multiple prompts below and generate comprehensive insights
                   </p>
                 </div>
               </div>
@@ -125,29 +150,65 @@ export default function DashboardPage() {
       </main>
 
       {/* Bottom Input */}
-      <div className="border-t border-white/20 bg-black/50 backdrop-blur-sm p-4">
-        <div className="max-w-3xl mx-auto">
-          <form onSubmit={handleSubmit} className="relative">
+      <div className="flex flex-col items-center justify-center mx-auto border border-white/10 bg-zinc-950 backdrop-blur-sm p-1 rounded-xl -translate-y-3">
+        <div className="w-full min-w-3xl space-y-3 border-white/10  backdrop-blur-sm p-4">
+          {/* Display Added Prompts */}
+          {prompts.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {prompts.map((prompt, index) => (
+                <div key={index} className="flex items-center gap-2 bg-gray-950 border border-white/20 rounded-lg px-3 py-1.5 text-sm">
+                  <span className="text-white">{prompt}</span>
+                  <button
+                    onClick={() => removePrompt(index)}
+                    className="text-white/70 hover:text-white transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Input Field */}
+          <div>
             <input
               type="text"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Message Spice AI..."
-              className="w-full px-4 py-3 pr-12 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/20 placeholder-white/50 text-white shadow-lg shadow-black/20 transition-all duration-200"
+              value={currentPrompt}
+              onChange={(e) => setCurrentPrompt(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Add a prompt and press Enter..."
+              className="w-full px-4 py-4 bg-white/5 border border-white/5 rounded-xl focus:outline-none focus:ring-1 focus:ring-white/5 focus:border-white/5 placeholder-white/50 text-white shadow-lg shadow-black/20 transition-all duration-200 h-12"
               disabled={isLoading}
             />
+          </div>
+
+          {/* Generate Insights Button - Centered Below Input */}
+          <div className="flex justify-center">
             <button
-              type="submit"
-              disabled={!message.trim() || isLoading}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-white/60 hover:text-white disabled:text-white/30 disabled:cursor-not-allowed transition-colors"
+              onClick={handleGenerateInsights}
+              disabled={prompts.length === 0 || isLoading}
+              className="px-8 py-3 bg-white hover:bg-gray-100 disabled:bg-gray-300 disabled:cursor-not-allowed text-black font-medium rounded-xl transition-colors duration-200 flex items-center gap-2"
             >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-gray-400 border-t-black rounded-full animate-spin"></div>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                  Generate Insights
+                </>
+              )}
             </button>
-          </form>
-          <p className="text-xs text-white/40 text-center mt-2">
-            Spice AI can make mistakes. Consider checking important information.
+          </div>
+          
+          <p className="text-xs text-white/40 text-center">
+            Press Enter to add prompts • {prompts.length} prompt{prompts.length !== 1 ? 's' : ''} added
           </p>
         </div>
       </div>
