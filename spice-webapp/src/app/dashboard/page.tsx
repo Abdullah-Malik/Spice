@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import MarkdownRenderer from '@/components/markdown-renderer';
+import Sidebar from '@/components/sidebar';
 
 interface SearchResult {
   title?: string;
@@ -23,6 +24,8 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [selectedMessageId, setSelectedMessageId] = useState<string>();
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -57,6 +60,7 @@ export default function DashboardPage() {
 
     setIsLoading(true);
     setError('');
+    setSelectedMessageId(undefined); // Clear selection when generating new insights
     
     // Store prompts before clearing them
     const currentPrompts = [...prompts];
@@ -133,8 +137,60 @@ export default function DashboardPage() {
     }
   }, [prompts, router, scrollToBottom]);
 
+  const handleMessageSelect = useCallback(async (messageId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:3000/v1/insights/${messageId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Clear current messages and set the selected conversation
+        const userMessage: Message = {
+          id: Date.now(),
+          content: '',
+          isUser: true,
+          prompts: data.prompts || []
+        };
+
+        const aiMessage: Message = {
+          id: Date.now() + 1,
+          content: data.results?.insights || 'No insights found',
+          isUser: false,
+          searchResults: data.results?.searchResults || []
+        };
+
+        setMessages([userMessage, aiMessage]);
+        setSelectedMessageId(messageId);
+        setIsSidebarOpen(false); // Close sidebar after selection
+        // Removed the setTimeout(scrollToBottom, 100); line
+      }
+    } catch (error) {
+      console.error('Error fetching message:', error);
+      setError('Failed to load selected message');
+    }
+  }, [router]);
+
+  const handleNewChat = useCallback(() => {
+    setMessages([]);
+    setPrompts([]);
+    setCurrentPrompt('');
+    setSelectedMessageId(undefined);
+    setError('');
+  }, []);
+
   const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
+    localStorage.removeItem('previousMessages');
     router.push('/login');
   }, [router]);
 
@@ -142,14 +198,28 @@ export default function DashboardPage() {
     setCurrentPrompt(e.target.value);
   }, []);
 
+  const toggleSidebar = useCallback(() => {
+    setIsSidebarOpen(prev => !prev);
+  }, []);
+
   return (
     <div className="flex flex-col h-screen bg-zinc-950 text-white">
+      {/* Sidebar */}
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onToggle={toggleSidebar}
+        onMessageSelect={handleMessageSelect}
+        selectedMessageId={selectedMessageId}
+      />
+
       {/* Header */}
       <header className="border-b border-white/10 bg-zinc-950 backdrop-blur-sm px-4 py-3">
         <div className="flex justify-between items-center max-w-6xl mx-auto">
-          <h1 className="text-lg font-medium">
-            Spice
-          </h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-lg font-medium">
+              Spice
+            </h1>
+          </div>
           <button
             onClick={handleLogout}
             className="px-3 py-1.5 text-sm border border-white/20 rounded-lg hover:bg-white/10 transition-colors"
@@ -183,40 +253,36 @@ export default function DashboardPage() {
             // Messages
             <div className="space-y-4 p-4">
               {messages.map((msg) => (
-                <div key={msg.id} className={`flex gap-4 ${msg.isUser ? 'flex-row-reverse' : ''}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    msg.isUser ? 'bg-zinc-800 border border-zinc-600' : 'bg-white text-black'
-                  }`}>
+                <div key={msg.id} className={`flex gap-4 ${msg.isUser ? 'justify-end' : ''}`}>
+                  {!msg.isUser && (
+                    <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center flex-shrink-0">
+                      AI
+                    </div>
+                  )}
+                  <div className={`${msg.isUser ? 'max-w-2xl' : 'max-w-4xl flex-1 min-w-0'}`}>
                     {msg.isUser ? (
-                      <span className="text-white font-medium">U</span>
-                    ) : (
-                      'AI'
-                    )}
-                  </div>
-                  <div className={`${msg.isUser ? 'max-w-2xl text-right' : 'max-w-full'}`}>
-                    {msg.isUser ? (
-                      // User message with individual prompts
-                      <div className="space-y-2">
+                      // User message with individual prompts - vertically stacked
+                      <div className="flex flex-col gap-2 items-end">
                         {msg.prompts?.map((prompt, index) => (
-                          <div key={index} className="inline-block bg-[#006CFF] text-white px-4 py-2 rounded-2xl mr-2 mb-2">
+                          <div key={index} className="bg-[#006CFF] text-white px-4 py-2 rounded-2xl">
                             {prompt}
                           </div>
                         ))}
                       </div>
                     ) : (
                       // AI message with search results and markdown
-                      <div className="space-y-3">
+                      <div className="space-y-3 max-w-full">
                         {/* Search Results - Horizontally Scrollable */}
                         {msg.searchResults && msg.searchResults.length > 0 && (
-                          <div className="w-full">
-                            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
+                          <div className="w-full max-w-full overflow-hidden">
+                            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hover">
                               {msg.searchResults.map((result, index) => (
                                 <a
                                   key={index}
                                   href={result.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="flex-shrink-0 min-w-[280px] max-w-[320px] bg-white/5 border border-white/10 rounded-lg p-3 hover:bg-white/10 transition-colors group"
+                                  className="flex-shrink-0 w-[280px] bg-white/5 border border-white/10 rounded-lg p-3 hover:bg-white/10 transition-colors group"
                                 >
                                   <div className="flex items-start gap-2">
                                     <svg className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -238,12 +304,19 @@ export default function DashboardPage() {
                         )}
                         
                         {/* AI Response */}
-                        <div className="inline-block p-4 rounded-2xl">
-                          <MarkdownRenderer content={msg.content} />
+                        <div className="w-full">
+                          <div className="inline-block p-4 rounded-2xl max-w-full">
+                            <MarkdownRenderer content={msg.content} />
+                          </div>
                         </div>
                       </div>
                     )}
                   </div>
+                  {msg.isUser && (
+                    <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-600 flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-medium">U</span>
+                    </div>
+                  )}
                 </div>
               ))}
               {isLoading && (

@@ -26,10 +26,7 @@ export const getInsight = async (req: Request, res: Response, next: NextFunction
     const { id } = req.params;
     const insight = await insightsService.getInsightById(id);
 
-    res.status(200).json({
-      success: true,
-      data: insight,
-    });
+    res.status(200).json(insight);
   } catch (error: unknown) {
     next(error);
   }
@@ -41,10 +38,7 @@ export const getUserInsights = async (req: Request, res: Response, next: NextFun
 
     const insights = await insightsService.getInsightsByUserId(userId!);
 
-    res.status(200).json({
-      success: true,
-      data: insights,
-    });
+    res.status(200).json(insights);
   } catch (error: unknown) {
     next(error);
   }

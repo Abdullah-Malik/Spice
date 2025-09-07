@@ -24,3 +24,53 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hover {
+  scrollbar-width: thin;
+  -ms-overflow-style: auto;
+  transition: all 0.3s ease;
+}
+
+.scrollbar-hover::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  transition: opacity 0.3s ease;
+}
+
+.scrollbar-hover::-webkit-scrollbar-track {
+  background: transparent;
+  transition: opacity 0.3s ease;
+}
+
+.scrollbar-hover::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0);
+  border-radius: 3px;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+
+.scrollbar-hover:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.scrollbar-hover::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* For Firefox */
+.scrollbar-hover {
+  scrollbar-color: rgba(255, 255, 255, 0) transparent;
+  transition: scrollbar-color 0.3s ease;
+}
+
+.scrollbar-hover:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
