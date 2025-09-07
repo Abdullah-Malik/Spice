@@ -113,15 +113,19 @@ export default function DashboardPage() {
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex gap-4 ${msg.isUser ? 'flex-row-reverse' : ''}`}>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    msg.isUser ? 'bg-blue-600' : 'bg-white text-black'
+                    msg.isUser ? 'bg-zinc-800 border border-zinc-600' : 'bg-white text-black'
                   }`}>
-                    {msg.isUser ? 'U' : 'AI'}
+                    {msg.isUser ? (
+                      <span className="text-white font-medium">U</span>
+                    ) : (
+                      'AI'
+                    )}
                   </div>
                   <div className={`max-w-2xl ${msg.isUser ? 'text-right' : ''}`}>
                     <div className={`inline-block p-3 rounded-2xl ${
                       msg.isUser 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-white/10 border border-white/20'
+                        ? 'bg-gray-300 text-black' 
+                        : 'bg-white/10 '
                     }`}>
                       {msg.text}
                     </div>
@@ -189,7 +193,7 @@ export default function DashboardPage() {
             <button
               onClick={handleGenerateInsights}
               disabled={prompts.length === 0 || isLoading}
-              className="px-8 py-3 bg-white hover:bg-gray-100 disabled:bg-gray-300 disabled:cursor-not-allowed text-black font-medium rounded-xl transition-colors duration-200 flex items-center gap-2"
+              className="px-8 py-3 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-300 disabled:cursor-not-allowed text-black font-medium rounded-xl transition-colors duration-200 flex items-center gap-2"
             >
               {isLoading ? (
                 <>
