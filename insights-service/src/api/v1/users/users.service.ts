@@ -2,11 +2,11 @@ import { UserAlreadyExistsError, UserNotFoundError } from '../../../types/error.
 import * as userRepository from '../users/users.repository';
 
 export const createUser = async (userData: {
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   password: string;
-  companyId: string;
+  companyId?: string;
 }) => {
   const existingUser = await userRepository.findOneUser({ email: userData.email });
   if (existingUser) {

@@ -2,11 +2,11 @@ import { User } from '../users/users.model';
 import { FilterQuery, UpdateQuery } from 'mongoose';
 
 export interface CreateUserData {
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   password: string;
-  companyId: string;
+  companyId?: string;
 }
 
 export interface UpdateUserData {
