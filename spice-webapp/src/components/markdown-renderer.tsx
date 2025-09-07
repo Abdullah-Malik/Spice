@@ -1,3 +1,4 @@
+import React, { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -5,7 +6,7 @@ interface MarkdownRendererProps {
   content: string;
 }
 
-export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
+const MarkdownRenderer = memo(function MarkdownRenderer({ content }: MarkdownRendererProps) {
   return (
     <div className="prose prose-invert prose-sm max-w-none prose-headings:text-white prose-p:text-white prose-p:text-justify prose-li:text-white prose-strong:text-white prose-code:text-white prose-pre:bg-black/20 prose-pre:border prose-pre:border-white/20 text-justify">
       <ReactMarkdown
@@ -142,4 +143,6 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
       </ReactMarkdown>
     </div>
   );
-}
+});
+
+export default MarkdownRenderer;

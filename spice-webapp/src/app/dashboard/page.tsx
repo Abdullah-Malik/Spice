@@ -1,16 +1,34 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import MarkdownRenderer from '@/components/markdown-renderer';
+
+interface SearchResult {
+  title?: string;
+  url: string;
+}
+
+interface Message {
+  id: number;
+  content: string;
+  isUser: boolean;
+  prompts?: string[];
+  searchResults?: SearchResult[];
+}
 
 export default function DashboardPage() {
   const [currentPrompt, setCurrentPrompt] = useState('');
   const [prompts, setPrompts] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<Array<{id: number, content: string, isUser: boolean, prompts?: string[]}>>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState('');
   const router = useRouter();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -20,7 +38,7 @@ export default function DashboardPage() {
     }
   }, [router]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (currentPrompt.trim()) {
@@ -28,13 +46,13 @@ export default function DashboardPage() {
         setCurrentPrompt('');
       }
     }
-  };
+  }, [currentPrompt]);
 
-  const removePrompt = (index: number) => {
+  const removePrompt = useCallback((index: number) => {
     setPrompts(prev => prev.filter((_, i) => i !== index));
-  };
+  }, []);
 
-  const handleGenerateInsights = async () => {
+  const handleGenerateInsights = useCallback(async () => {
     if (prompts.length === 0) return;
 
     setIsLoading(true);
@@ -52,7 +70,7 @@ export default function DashboardPage() {
       }
 
       // Add user message with individual prompts
-      const userMessage = { 
+      const userMessage: Message = { 
         id: Date.now(), 
         content: '', 
         isUser: true,
@@ -62,6 +80,9 @@ export default function DashboardPage() {
       
       // Clear prompts after adding to messages
       setPrompts([]);
+      
+      // Scroll to bottom only when Generate Insights is clicked
+      setTimeout(scrollToBottom, 100);
       
       // Make API call to backend
       const response = await fetch('http://localhost:3000/v1/insights/', {
@@ -88,14 +109,16 @@ export default function DashboardPage() {
       // Parse the JSON response
       const data = await response.json();
       
-      // Extract the insights from the response structure
+      // Extract the insights and search results from the response structure
       const insights = data.results?.insights || 'No insights generated';
+      const searchResults = data.results?.searchResults || [];
       
-      // Add AI response message
-      const aiMessage = { 
+      // Add AI response message with search results
+      const aiMessage: Message = { 
         id: Date.now() + 1, 
         content: insights, 
-        isUser: false 
+        isUser: false,
+        searchResults: searchResults
       };
       setMessages(prev => [...prev, aiMessage]);
       
@@ -108,12 +131,16 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [prompts, router, scrollToBottom]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
     router.push('/login');
-  };
+  }, [router]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setCurrentPrompt(e.target.value);
+  }, []);
 
   return (
     <div className="flex flex-col h-screen bg-zinc-950 text-white">
@@ -177,9 +204,43 @@ export default function DashboardPage() {
                         ))}
                       </div>
                     ) : (
-                      // AI message with markdown
-                      <div className="inline-block p-4 rounded-2xl">
-                        <MarkdownRenderer content={msg.content} />
+                      // AI message with search results and markdown
+                      <div className="space-y-3">
+                        {/* Search Results - Horizontally Scrollable */}
+                        {msg.searchResults && msg.searchResults.length > 0 && (
+                          <div className="w-full">
+                            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
+                              {msg.searchResults.map((result, index) => (
+                                <a
+                                  key={index}
+                                  href={result.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex-shrink-0 min-w-[280px] max-w-[320px] bg-white/5 border border-white/10 rounded-lg p-3 hover:bg-white/10 transition-colors group"
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <svg className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
+                                    </svg>
+                                    <div className="min-w-0 flex-1">
+                                      <h4 className="text-sm font-medium text-white group-hover:text-blue-300 transition-colors line-clamp-2">
+                                        {result.title || 'Untitled'}
+                                      </h4>
+                                      <p className="text-xs text-white/60 mt-1 truncate">
+                                        {new URL(result.url).hostname}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* AI Response */}
+                        <div className="inline-block p-4 rounded-2xl">
+                          <MarkdownRenderer content={msg.content} />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -201,6 +262,8 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )}
+              {/* Invisible div for scrolling reference */}
+              <div ref={messagesEndRef} />
             </div>
           )}
         </div>
@@ -217,7 +280,7 @@ export default function DashboardPage() {
 
       {/* Bottom Input */}
       <div className="flex flex-col items-center justify-center mx-auto border border-white/10 bg-zinc-950 backdrop-blur-sm p-1 rounded-xl -translate-y-3 translate-x-4">
-        <div className="w-full min-w-3xl space-y-3 border-white/10 backdrop-blur-sm p-4">
+        <div className="w-full min-w-3xl max-w-3xl space-y-3 border-white/10 backdrop-blur-sm p-4">
           {/* Display Added Prompts */}
           {prompts.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3">
@@ -242,7 +305,7 @@ export default function DashboardPage() {
             <input
               type="text"
               value={currentPrompt}
-              onChange={(e) => setCurrentPrompt(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder="Add a prompt and press Enter..."
               className="w-full px-4 py-4 bg-white/5 border border-white/5 rounded-xl focus:outline-none focus:ring-1 focus:ring-white/5 focus:border-white/5 placeholder-white/50 text-white shadow-lg shadow-black/20 transition-all duration-200 h-12"
