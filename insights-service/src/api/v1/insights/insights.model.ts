@@ -19,6 +19,7 @@ export interface IInsightResult {
   searchResults: ISearchResult[];
   content: IContentResult[];
   insights: string;
+  context: string;
   success: boolean;
   error?: string;
 }
@@ -61,6 +62,7 @@ const insightResultSchema = new Schema(
     prompts: [{ type: String, required: true }],
     searchResults: [searchResultSchema],
     content: [contentResultSchema],
+    context: { type: String },
     insights: { type: String, required: true },
     success: { type: Boolean, required: true },
     error: { type: String },

@@ -4,8 +4,7 @@ import { ISearchResult } from '../insights/insights.model';
 
 export const search = async (query: string, options: SearchOptions = {}): Promise<ISearchResult[]> => {
   try {
-    const results = await webSearch(query, options);
-    return results;
+    return await webSearch(query, options);
   } catch (error) {
     console.error(`Web search failed for query "${query}":`, error);
     const message = error instanceof Error ? error.message : String(error);

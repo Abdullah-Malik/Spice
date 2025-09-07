@@ -4,4 +4,4 @@ export interface SearchOptions {
   numResults?: number;
 }
 
-export type SearchResult = ExaSearchResult<{ summary: true }>;
+export type SearchResult = ExaSearchResult<{ text: true }>;

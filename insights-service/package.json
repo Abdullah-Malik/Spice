@@ -17,6 +17,7 @@
     ]
   },
   "dependencies": {
+    "@google/genai": "^1.17.0",
     "@types/bcrypt": "^6.0.0",
     "axios": "^1.11.0",
     "bcrypt": "^6.0.0",

@@ -1,10 +1,21 @@
 import * as insightsRepository from './insights.repository';
 import * as webSearchService from '../web-search/web-search.service';
+import * as webpageContentService from '../webpage-content/webpage-content.service';
+import * as llmService from '../llm/llm.service';
 
 export const createInsight = async (userId: string, prompts: string[]) => {
   try {
     // Search for pages using the provided prompts
     const searchResults = await webSearchService.getSearchEngineResults(prompts);
+
+    // Extract URLs from search results
+    const urls = searchResults.map((result) => result.url);
+
+    // Extract content from the URLs
+    const contentResults = await webpageContentService.extractContentFromWebPages(urls);
+
+    // Generate insights using the extracted content
+    const insights = await llmService.generateInsights(contentResults.context);
 
     // Create insight record with search results
     const insight = await insightsRepository.createInsight({
@@ -18,8 +29,9 @@ export const createInsight = async (userId: string, prompts: string[]) => {
         {
           prompts: prompts,
           searchResults: searchResults,
-          content: [],
-          insights: '',
+          content: contentResults.results,
+          context: contentResults.context,
+          insights: insights,
           success: true,
         },
       ],
