@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 
-interface SidebarMessage {
+export interface SidebarMessage {
   _id: string;
   prompts: string[];
   createdAt: string;
@@ -15,7 +15,11 @@ interface SidebarProps {
   selectedMessageId?: string;
 }
 
-export default function Sidebar({ isOpen, onToggle, onMessageSelect, selectedMessageId }: SidebarProps) {
+export interface SidebarRef {
+  addNewMessage: (message: SidebarMessage) => void;
+}
+
+const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ isOpen, onToggle, onMessageSelect, selectedMessageId }, ref) => {
   const [messages, setMessages] = useState<SidebarMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -25,7 +29,7 @@ export default function Sidebar({ isOpen, onToggle, onMessageSelect, selectedMes
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:3000/v1/insights/user/me', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/insights/user/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -49,6 +53,18 @@ export default function Sidebar({ isOpen, onToggle, onMessageSelect, selectedMes
       setIsLoading(false);
     }
   }, []);
+
+  // Expose method to parent component via ref
+  useImperativeHandle(ref, () => ({
+    addNewMessage: (newMessage: SidebarMessage) => {
+      setMessages(prev => {
+        const updated = [newMessage, ...prev];
+        // Update localStorage as well
+        localStorage.setItem('previousMessages', JSON.stringify(updated));
+        return updated;
+      });
+    }
+  }), []);
 
   useEffect(() => {
     // Load from localStorage first
@@ -173,4 +189,8 @@ export default function Sidebar({ isOpen, onToggle, onMessageSelect, selectedMes
       </div>
     </>
   );
-}
+});
+
+Sidebar.displayName = 'Sidebar';
+
+export default Sidebar;

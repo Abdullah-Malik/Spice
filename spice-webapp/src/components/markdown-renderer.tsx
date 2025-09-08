@@ -12,7 +12,6 @@ const MarkdownRenderer = memo(function MarkdownRenderer({ content }: MarkdownRen
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          // Headings with #EDEDED color
           h1: ({ children }) => (
             <h1 className="text-xl font-semibold mb-3 border-b border-gray-800 pb-2" style={{ color: '#EDEDED' }}>
               {children}

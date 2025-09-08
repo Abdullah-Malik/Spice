@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/sidebar';
+import Sidebar, { SidebarMessage } from '@/components/sidebar';
 import ChatInput from '@/components/chat-input';
 import MessageList from '@/components/message-list';
 
@@ -31,6 +31,7 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState<string>();
+  const sidebarRef = useRef<{ addNewMessage: (message: SidebarMessage) => void }>(null);
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -84,7 +85,7 @@ export default function DashboardPage() {
       setTimeout(scrollToBottom, 100);
       
       // Make API call to backend
-      const response = await fetch('http://localhost:3000/v1/insights/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/insights/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -113,7 +114,7 @@ export default function DashboardPage() {
       const insights = data.results?.insights || 'No insights generated';
       const searchResults = data.results?.searchResults || [];
       
-      // Add AI response message with search results
+      // Add AI response message
       const aiMessage: Message = { 
         id: Date.now() + 1, 
         content: insights, 
@@ -121,6 +122,19 @@ export default function DashboardPage() {
         searchResults: searchResults
       };
       setMessages(prev => [...prev, aiMessage]);
+      
+      // Add the new message to sidebar
+      if (data._id) {
+        const newSidebarMessage = {
+          _id: data._id,
+          prompts: currentPrompts,
+          createdAt: new Date().toISOString()
+        };
+        
+        // Update sidebar with new message
+        sidebarRef.current?.addNewMessage(newSidebarMessage);
+        setSelectedMessageId(data._id);
+      }
       
     } catch (error) {
       console.error('Error generating insights:', error);
@@ -143,7 +157,7 @@ export default function DashboardPage() {
         return;
       }
 
-      const response = await fetch(`http://localhost:3000/v1/insights/${messageId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/insights/${messageId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -152,13 +166,11 @@ export default function DashboardPage() {
       if (response.ok) {
         const data = await response.json();
         
-        // Clear current messages and set the selected conversation
         const userMessage: Message = {
           id: Date.now(),
           content: '',
           isUser: true,
           prompts: data.prompts || [],
-          // Note: Brand info might not be stored in the database yet
           brandName: data.brandName || '',
           brandDescription: data.brandDescription || ''
         };
@@ -196,6 +208,7 @@ export default function DashboardPage() {
     <div className="flex flex-col h-screen bg-zinc-950 text-white">
       {/* Sidebar */}
       <Sidebar
+        ref={sidebarRef}
         isOpen={isSidebarOpen}
         onToggle={toggleSidebar}
         onMessageSelect={handleMessageSelect}

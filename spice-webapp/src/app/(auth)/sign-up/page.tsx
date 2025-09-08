@@ -18,7 +18,7 @@ export default function RegisterPage() {
       setIsSuccessful(false);
       setError('');
       
-      const response = await fetch('http://localhost:3000/v1/auth/register', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -34,10 +34,8 @@ export default function RegisterPage() {
       if (response.ok) {
         setIsSuccessful(true);
         
-        // Store the JWT token (you can also use sessionStorage or a state management library)
         localStorage.setItem('token', data.token);
         
-        // Redirect to dashboard after successful registration
         setTimeout(() => {
           router.push('/dashboard');
         }, 1000);
