@@ -14,7 +14,7 @@ export const search = async (query: string, options: SearchOptions = {}): Promis
   try {
     const client = getExaClient();
     const searchOptions = {
-      numResults: options.numResults || 10,
+      numResults: options.numResults || 5,
     };
 
     const response = await client.search(query, searchOptions);
