@@ -27,6 +27,8 @@ export interface IInsightResult {
 export interface IInsight extends Document {
   userId: string;
   prompts: string[];
+  brandName: string;
+  brandDescription: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   results?: IInsightResult;
   createdAt: Date;
@@ -73,6 +75,8 @@ const insightResultSchema = new Schema(
 const insightSchema = new Schema<IInsight>({
   userId: { type: String, required: true, index: true },
   prompts: [{ type: String, required: true }],
+  brandName: [{ type: String, required: true }],
+  brandDescription: [{ type: String, required: true }],
   status: {
     type: String,
     enum: ['pending', 'processing', 'completed', 'failed'],

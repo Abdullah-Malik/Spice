@@ -3,7 +3,7 @@ import * as webSearchService from '../web-search/web-search.service';
 import * as webpageContentService from '../webpage-content/webpage-content.service';
 import * as llmService from '../llm/llm.service';
 
-export const createInsight = async (userId: string, prompts: string[]) => {
+export const createInsight = async (userId: string, prompts: string[], brandName: string, brandDescription: string) => {
   try {
     // Search for pages using the provided prompts
     const searchResults = await webSearchService.getSearchEngineResults(prompts);
@@ -14,13 +14,15 @@ export const createInsight = async (userId: string, prompts: string[]) => {
     // Extract content from the URLs
     const contentResults = await webpageContentService.extractContentFromWebPages(urls);
 
-    // Generate insights using the extracted content
-    const insights = await llmService.generateInsights(contentResults.context);
+    // Generate insights using the extracted content with brand context
+    const insights = await llmService.generateInsights(contentResults.context, brandName, brandDescription);
 
     // Create insight record with search results
     const insight = await insightsRepository.createInsight({
       userId,
       prompts,
+      brandName,
+      brandDescription,
     });
 
     // Update the insight with search results using updateInsightById

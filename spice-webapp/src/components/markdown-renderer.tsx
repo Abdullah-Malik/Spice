@@ -8,7 +8,7 @@ interface MarkdownRendererProps {
 
 const MarkdownRenderer = memo(function MarkdownRenderer({ content }: MarkdownRendererProps) {
   return (
-    <div className="prose prose-invert prose-sm max-w-none prose-headings:text-white prose-p:text-white prose-p:text-justify prose-li:text-white prose-strong:text-white prose-code:text-white prose-pre:bg-black/20 prose-pre:border prose-pre:border-white/20 text-justify">
+    <div className="prose prose-invert prose-sm max-w-none prose-headings:text-white prose-p:text-white prose-p:text-justify prose-li:text-white prose-strong:text-white prose-code:text-white prose-pre:bg-black/20 prose-pre:border prose-pre:border-white/20">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{

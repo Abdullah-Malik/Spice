@@ -4,6 +4,8 @@ import { FilterQuery, UpdateQuery } from 'mongoose';
 export interface CreateInsightData {
   userId: string;
   prompts: string[];
+  brandName: string;
+  brandDescription: string;
 }
 
 export interface UpdateInsightData {

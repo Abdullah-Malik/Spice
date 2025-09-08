@@ -7,13 +7,8 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - PORT=3000
-      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/insights_db?authSource=admin
-      - DB_NAME=insights_db
-      - JWT_SECRET=your-very-secure-jwt-secret-key
-      - LOG_LEVEL=info
+    env_file:
+      - .env.dev
     volumes:
       - ./insights-service:/usr/src/app
       - /usr/src/app/node_modules
@@ -23,38 +18,36 @@ services:
       - spice-network
     command: npm run dev
 
-  # MongoDB Database
+  spice-webapp:
+    build:
+      context: ./spice-webapp
+      dockerfile: Dockerfile.dev
+    container_name: spice-webapp
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    env_file:
+      - .env.dev
+    volumes:
+      - ./spice-webapp:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/.next
+    depends_on:
+      - insights-api
+    networks:
+      - spice-network
+    command: npm run dev
+
   mongodb:
     image: mongo:7.0
     container_name: spice-mongodb
     restart: unless-stopped
     ports:
       - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password123
-      MONGO_INITDB_DATABASE: insights_db
+    env_file:
+      - .env.dev
     volumes:
       - mongodb_data:/data/db
-    networks:
-      - spice-network
-
-  # MongoDB Web UI
-  mongo-express:
-    image: mongo-express:1.0.0
-    container_name: spice-mongo-express
-    restart: unless-stopped
-    ports:
-      - "8081:8081"
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
-      ME_CONFIG_MONGODB_ADMINPASSWORD: password123
-      ME_CONFIG_MONGODB_URL: mongodb://admin:password123@mongodb:27017/
-      ME_CONFIG_BASICAUTH: true
-      ME_CONFIG_BASICAUTH_USERNAME: webadmin
-      ME_CONFIG_BASICAUTH_PASSWORD: webpass123
-    depends_on:
-      - mongodb
     networks:
       - spice-network
 

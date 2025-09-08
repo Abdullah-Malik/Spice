@@ -1,10 +1,18 @@
 import { generateText } from './llm.client';
 import { GenerateOptions } from './llm.types';
 
-export const generateInsights = async (context: string, options?: GenerateOptions): Promise<string> => {
+export const generateInsights = async (
+  context: string,
+  brandName: string,
+  brandDescription: string,
+  options?: GenerateOptions
+): Promise<string> => {
   try {
     const finalOptions = options || getDefaultGenerateOptions();
-    const prompt = createInsightPrompt(context);
+
+    // Pass the new brand-specific arguments to the prompt creation function
+    const prompt = createInsightPrompt(context, brandName, brandDescription);
+
     const response = await generateText(prompt, finalOptions);
     return response || '';
   } catch (error) {
@@ -14,37 +22,54 @@ export const generateInsights = async (context: string, options?: GenerateOption
   }
 };
 
-const createInsightPrompt = (context: string): string => {
+const createInsightPrompt = (context: string, brandName: string, brandDescription: string): string => {
   return `
-    You are Spice, Arrakis's advanced signal detection system for consumer brands. You analyze web content to help brands understand market trends, consumer sentiment, and competitive positioning.
+    You are an expert Market Analyst AI. Your mission is to analyze provided web content and generate a concise, data-driven intelligence briefing for a brand marketer.
 
-    Based on the following web content, generate comprehensive market insights for brand marketers:
+    **Your Client:**
+    - Brand Name: ${brandName}
+    - Brand Description: ${brandDescription}
 
-    Just start your response right away. Don't mention Spice or Arrakis.
-
+    **Analysis Context (Scraped Web Content):**
+    ---
     ${context}
+    ---
 
-    # Market Intelligence Report
+    **Instructions:**
+    1.  Carefully analyze the **Analysis Context** from the perspective of your client, **${brandName}**.
+    2.  Your entire response must be in Markdown format.
+    3.  If the context is insufficient to answer a section, explicitly state "Insufficient data in the provided context." Do not invent information.
+    4.  Base all your analysis strictly on the provided text.
+    5.  Begin your response immediately with the first Markdown header. Do not include any preamble.
 
-    ## Executive Summary
-    Provide a high-level overview of the key findings that would matter most to brand marketers and decision-makers.
+    # Market Intelligence Briefing
 
-    ## Consumer Sentiment Analysis
-    Analyze what consumers are saying, feeling, and thinking about the topics discussed. Identify positive, negative, and neutral sentiment patterns.
+    ## 1. Executive Summary
+    Provide a 2-3 sentence high-level overview of the most critical findings in the text for a busy executive at ${brandName}.
 
-    ## Market Trends & Opportunities
-    Identify emerging trends, market gaps, and potential opportunities for brands to capitalize on.
+    ## 2. Key Entities Mentioned
+    Extract the key companies, products, or people mentioned in the text. Format as a bulleted list. This helps in tracking mentions and competitors.
+    - Company/Product: [Name]
+    - Company/Product: [Name]
 
-    ## Competitive Landscape Insights
-    Highlight competitive dynamics, market positioning insights, and differentiation opportunities.
+    ## 3. Consumer Sentiment & Narrative
+    Analyze the expressed sentiment (positive, negative, neutral) within the text. What is the overall story or narrative being told? Differentiate between the author's opinion and cited user feedback if possible.
 
-    ## Strategic Recommendations
-    Provide 3-5 actionable recommendations that brands can implement based on these insights.
+    ## 4. Competitive Landscape
+    - **Mentions:** List any direct or indirect competitors to ${brandName} mentioned in the text.
+    - **Positioning:** How are these competitors positioned? What are their perceived strengths and weaknesses according to the text?
+    - **${brandName}'s Position:** If ${brandName} is mentioned, how is it portrayed? If not mentioned, where could it have fit into the conversation?
 
-    ## Risk Factors & Considerations
-    Identify potential challenges, risks, or market headwinds that brands should be aware of.
+    ## 5. Strategic Opportunities & Risks for ${brandName}
+    Based *only* on the provided text, identify potential opportunities and risks for ${brandName}.
+    - **Opportunities:** (e.g., market gaps, unmet needs, competitor weaknesses to exploit)
+    - **Risks:** (e.g., emerging trends that threaten ${brandName}'s position, negative sentiment, strong competitor performance)
 
-    Present your analysis in a clear, professional format that would be valuable for marketing teams making strategic decisions.
+    ## 6. Actionable Recommendations
+    Provide 2-3 specific, actionable recommendations for the marketing team at ${brandName} based on this analysis.
+    1.  **Recommendation:** ... **Rationale:** ...
+    2.  **Recommendation:** ... **Rationale:** ...
+
   `.trim();
 };
 
